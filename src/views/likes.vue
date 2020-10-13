@@ -76,6 +76,7 @@
                             size="mini"
                             :header-cell-class-name="headerStyle"
                             row-dblclick
+                            @row-dblclick="playMusic"
                         >
                             <el-table-column type="index" width="60">
                             </el-table-column>
@@ -90,7 +91,7 @@
                             <el-table-column
                                 prop="name"
                                 label="音乐标题"
-                                width="240"
+                                width="320"
                             >
                                 <template slot-scope="scope">
                                     <span>{{ alia(scope.row) }} </span>
@@ -99,13 +100,13 @@
                             <el-table-column
                                 prop="ar[0].name"
                                 label="歌手"
-                                width="200"
+                                width="230"
                             >
                             </el-table-column>
                             <el-table-column
                                 prop="al.name"
                                 label="专辑"
-                                width="180"
+                                width="300"
                             >
                                 <template slot-scope="scope">
                                     <span>{{ al(scope.row) }}</span>
@@ -119,10 +120,10 @@
                         </el-table>
                     </el-tab-pane>
                     <el-tab-pane class="tabs" label="评论" name="second"
-                        >配置管理</el-tab-pane
+                        >评论</el-tab-pane
                     >
                     <el-tab-pane class="tabs" label="收藏者" name="third"
-                        >角色管理</el-tab-pane
+                        >收藏者</el-tab-pane
                     >
                 </el-tabs>
             </el-main>
@@ -131,7 +132,7 @@
 </template>
 
 <script>
-import { mapMutations } from "vuex";
+import { mapMutations, mapActions } from "vuex";
 import { strLength } from "../common/utils";
 
 export default {
@@ -146,17 +147,17 @@ export default {
                 if (row.alia.length != 0) {
                     let name = row.name + " (" + row.alia[0] + ")";
                     let len = strLength(name);
-                    name = len > 34 ? name.othersubstr(0, 34) + "..." : name;
+                    name = len > 50 ? name.othersubstr(0, 50) + "..." : name;
                     return name;
                 } else if (row.tns) {
                     let name = row.name + " (" + row.tns[0] + ")";
                     let len = strLength(name);
-                    name = len > 34 ? name.othersubstr(0, 34) + "..." : name;
+                    name = len > 50 ? name.othersubstr(0, 50) + "..." : name;
                     return name;
                 } else {
                     let name = row.name;
                     let len = strLength(name);
-                    name = len > 34 ? name.othersubstr(0, 34) + "..." : name;
+                    name = len > 50 ? name.othersubstr(0, 50) + "..." : name;
                     return name;
                 }
             };
@@ -166,12 +167,13 @@ export default {
                 let name = row.al.name;
                 let len = strLength(name);
                 // console.log(name.length);
-                name = len > 22 ? name.othersubstr(0, 22) + "..." : name;
+                name = len > 43 ? name.othersubstr(0, 43) + "..." : name;
                 return name;
             };
         }
     },
     methods: {
+        ...mapActions(["getMucicUrlByIdAsync"]),
         ...mapMutations(["notify"]),
         // 编写headerStyle，返回class名称tableStyle
         headerStyle({ row, column, rowIndex, columnIndex }) {
@@ -182,26 +184,33 @@ export default {
                 confirmButtonText: "确定",
                 cancelButtonText: "取消",
                 type: "warning"
-            })
-                .then(() => {
-                    const el = event.target;
+            }).then(() => {
+                const el = event.target;
+                console.log(this.$store.state.likesMusic);
+                this.$store.state.likesMusic.forEach((item, index) => {
+                    if (item.id === row.id) {
+                        item.isActive = false;
+                        this.$store.state.likesMusic.splice(index, 1);
+                    }
                     console.log(this.$store.state.likesMusic);
-                    this.$store.state.likesMusic.forEach((item, index) => {
-                        if (item.id === row.id) {
-                            item.isActive = false;
-                            this.$store.state.likesMusic.splice(index, 1);
-                        }
-                        console.log(this.$store.state.likesMusic);
-                        // this.notify()
-                    });
-                })
-                .catch(() => {
-                    this.$message({
-                        type: "info",
-                        message: "已取消删除"
-                    });
+                    // this.notify()
                 });
-        }
+            }).catch(() => {
+                this.$message({
+                    type: "info",
+                    message: "已取消删除"
+                });
+            });
+        },
+         // 点击按钮播放音乐
+        playMusic(row) {
+            const params = {
+                V: this,
+                id: row.id
+            };
+            // 播放音乐
+            this.getMucicUrlByIdAsync(params);
+        },
     }
 };
 </script>
